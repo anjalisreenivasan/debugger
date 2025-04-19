@@ -21,5 +21,23 @@ class RunAll(gdb.Command):
                 scope = stack.block()
                 # create dictionary {variable: value}
                 vars = {}
-                #
+                # loop through code and find variables
+                for symbol in scope:
+                    if symbol.is_variable:
+                        try:
+                            # rea value of variable in current frame
+                            value = stack.read_var(symbol.name)
+                        except:
+                            #idk whatever
+                        # curr line number using program counter
+                        line = gdb.find_pc_line(stack.pc).line
+                        
+
+
+
+                        
+
+
+
+
 
