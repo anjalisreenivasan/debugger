@@ -1,5 +1,7 @@
 import gdb
 import json
+import os
+import re
 
 # custom gdb command
 class RunAll(gdb.Command):
@@ -8,6 +10,25 @@ class RunAll(gdb.Command):
         super(RunAll, self).__init__("runall", gdb.COMMAND_USER)
         # initialize empty list to hold data at each line
         self.trace_data = []
+    
+    def get_program_name(self):
+        # Get the full path of the running program
+        exec_file = gdb.current_progspace().filename
+        if exec_file:
+            return os.path.basename(exec_file)
+        return "trace"  # default
+
+    def get_next_filename(self, base_name):
+        # Remove extension if any (just in case), and make safe
+        base = os.path.splitext(base_name)[0]
+        pattern = re.compile(rf"{re.escape(base)}_(\d+)\.json")
+
+        # Look for all matching files in current directory
+        existing = [f for f in os.listdir(".") if pattern.fullmatch(f)]
+        numbers = [int(pattern.fullmatch(f).group(1)) for f in existing]
+
+        next_num = max(numbers, default=0) + 1
+        return f"{base}_{next_num}.json"
 
     # run gdb on the program and save data
     def invoke(self, args, from_tty):
@@ -41,15 +62,14 @@ class RunAll(gdb.Command):
                 # next line
                 gdb.execute("next")
 
-            except:
+            except gdb.error:
+                break
                 # end of program
+        
+        base = self.get_program_basename()
+        output_file = self.get_next_filename(base)
 
-
-
-
-                        
-
-
-
-
-
+        # Save the JSON file
+        with open(output_file, "w") as f:
+            json.dump(self.trace_data, f, indent=2)
+RunAll()
