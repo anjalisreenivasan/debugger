@@ -1,4 +1,5 @@
-import gdb
+# custom command to run gdb on entire program and save data to json file
+import gdb # type: ignore
 import json
 import os
 import re
@@ -6,28 +7,33 @@ import re
 # custom gdb command
 class RunAll(gdb.Command):
     def __init__(self):
-        # register command name in gdb
+        # call super constructor, register command name in gdb
         super(RunAll, self).__init__("runall", gdb.COMMAND_USER)
-        # initialize empty list to hold data at each line
-        self.trace_data = []
+        # empty dict to hold data at each line
+        self.trace_data = {}
     
     def get_program_name(self):
         # Get the full path of the running program
         exec_file = gdb.current_progspace().filename
         if exec_file:
+            # return only a.out
             return os.path.basename(exec_file)
         return "trace"  # default
 
     def get_next_filename(self, base_name):
-        # Remove extension if any (just in case), and make safe
+        # store just the program name
         base = os.path.splitext(base_name)[0]
+        # regex for matching
         pattern = re.compile(rf"{re.escape(base)}_(\d+)\.json")
 
-        # Look for all matching files in current directory
+        # list of existing files in current directory
         existing = [f for f in os.listdir(".") if pattern.fullmatch(f)]
+        # extract numbers from those files
         numbers = [int(pattern.fullmatch(f).group(1)) for f in existing]
 
+        # next available number for naming the file
         next_num = max(numbers, default=0) + 1
+        # final file name
         return f"{base}_{next_num}.json"
 
     # run gdb on the program and save data
@@ -40,12 +46,17 @@ class RunAll(gdb.Command):
             try:
                 # get current stack frame
                 stack = gdb.selected_frame()
+                # get source line mapping
+                sal = gdb.find_pc_line(stack.pc())
+                # filter out lines that are not in source file (libraries etc)
+                if not sal.symtab or not sal.symtab.filename.endswith(".c"):
+                    gdb.execute("step")
+                    continue
                 # get current scope
                 scope = stack.block()
                 # create dictionary {symbol: value}
                 vars = {}
                 # loop through code and find variables
-                # symbol is an object with a set of functions you can use, automatically an object when u iterate scope
                 for symbol in scope:
                     if symbol.is_variable:
                         try:
@@ -56,17 +67,17 @@ class RunAll(gdb.Command):
                         except:
                             vars[symbol.name] = "undefined"
                         # get the curr line number where the symbol is using program counter
-                        line = gdb.find_pc_line(stack.pc).line
+                        line = sal.line
                         # add to trace data dictionary, {line num (int): updated vars dictionary}
                         self.trace_data[line] = vars
-                # next line
-                gdb.execute("next")
+                # next instruction
+                gdb.execute("step")
 
-            except gdb.error:
+            except (gdb.error, RuntimeError):
                 break
                 # end of program
         
-        base = self.get_program_basename()
+        base = self.get_program_name()
         output_file = self.get_next_filename(base)
 
         # Save the JSON file

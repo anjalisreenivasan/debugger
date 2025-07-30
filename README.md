@@ -4,3 +4,11 @@ Load the JSON into an ai system
 User asks ai questions about errors in code
 
 python3 gdb_compiler.py mycode.c to use the gdb compiler
+
+Expand program to have:
+
+Global/static variables
+
+Function call tracking
+
+Multiple stack frames
