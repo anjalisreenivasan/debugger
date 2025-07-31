@@ -54,7 +54,7 @@ class RunAll(gdb.Command):
                     continue
                 # get current scope
                 scope = stack.block()
-                # create dictionary {symbol: value}
+                # create dictionary {variable name : value}
                 vars = {}
                 # loop through code and find variables
                 for symbol in scope:
