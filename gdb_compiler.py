@@ -28,6 +28,7 @@ script = tempfile.NamedTemporaryFile(delete=False, mode = 'w', suffix='.gdb')
 # get and write absolute path to run from any directory
 abs_path = os.path.join(os.path.dirname(__file__), "gdb_tracer.py")
 script.write(f"source {abs_path}\n")
+script.write("python print('TRACER LOADED YEAH YEAH YEAH')\n")
 
 # write gdb instructions to script
 script.write("runall\n")

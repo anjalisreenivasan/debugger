@@ -11,6 +11,14 @@ class RunAll(gdb.Command):
         super(RunAll, self).__init__("runall", gdb.COMMAND_USER)
         # empty dict to hold data at each line
         self.trace_data = {}
+        # user workspace directory for vs code extension or empty 
+        self.workspace_root = os.environ.get("VSCODE_WORKSPACE_ROOT", "").strip()
+        if self.workspace_root:
+            # vs cpde
+            self.workspace_root = os.path.abspath(self.workspace_root)
+        else:
+            # docker
+            self.workspace_root = os.getcwd()
     
     def get_program_name(self):
         # Get the full path of the running program
@@ -39,7 +47,8 @@ class RunAll(gdb.Command):
     # run gdb on the program and save data
     def invoke(self, args, from_tty):
         # start running gdb at the beggining of main
-        gdb.execute("start")
+        gdb.execute("start", to_string=True)
+        gdb.execute("step")
         # infinite loop to step through every line of code
         while True:
             # for each line
@@ -48,12 +57,26 @@ class RunAll(gdb.Command):
                 stack = gdb.selected_frame()
                 # get source line mapping
                 sal = gdb.find_pc_line(stack.pc())
+
+                # stop after main, no cleanup data
                 if stack.name() == "main" and stack.older() is None:
                     break
-                # filter out lines that are not in user's working directory (libraries, system calls)
-                if not sal.symtab or not sal.symtab.filename.endswith(".c"):
+
+                # filters out frames that map to non source files (assembly..)
+                if not sal.symtab:
+                    gdb.execute("step")
+                    continue
+
+                src_path = os.path.abspath(sal.symtab.filename)
+
+                if self.workspace_root and src_path.startswith(self.workspace_root):
+                     pass #vs code
+                elif src_path.endswith(".c"):
+                     pass  # docker
+                else:
                      gdb.execute("step")
                      continue
+
                 # get current scope
                 scope = stack.block()
                 # create dictionary {variable name : value}
