@@ -40,8 +40,6 @@ class RunAll(gdb.Command):
     def invoke(self, args, from_tty):
         # start running gdb at the beggining of main
         gdb.execute("start")
-        # get user's working directory
-        user_dir = os.getcwd()
         # infinite loop to step through every line of code
         while True:
             # for each line
@@ -50,10 +48,12 @@ class RunAll(gdb.Command):
                 stack = gdb.selected_frame()
                 # get source line mapping
                 sal = gdb.find_pc_line(stack.pc())
+                if stack.name() == "main" and stack.older() is None:
+                    break
                 # filter out lines that are not in user's working directory (libraries, system calls)
-                if not sal.symtab or not os.path.abspath(sal.symtab.filename).startswith(user_dir):
-                    gdb.execute("step")
-                    continue
+                if not sal.symtab or not sal.symtab.filename.endswith(".c"):
+                     gdb.execute("step")
+                     continue
                 # get current scope
                 scope = stack.block()
                 # create dictionary {variable name : value}
