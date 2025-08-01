@@ -14,7 +14,7 @@ class RunAll(gdb.Command):
         # user workspace directory for vs code extension or empty 
         self.workspace_root = os.environ.get("VSCODE_WORKSPACE_ROOT", "").strip()
         if self.workspace_root:
-            # vs cpde
+            # vs code
             self.workspace_root = os.path.abspath(self.workspace_root)
         else:
             # docker
@@ -47,7 +47,7 @@ class RunAll(gdb.Command):
     # run gdb on the program and save data
     def invoke(self, args, from_tty):
         # start running gdb at the beggining of main
-        gdb.execute("start", to_string=True)
+        gdb.execute("start")
         gdb.execute("step")
         # infinite loop to step through every line of code
         while True:
@@ -59,8 +59,8 @@ class RunAll(gdb.Command):
                 sal = gdb.find_pc_line(stack.pc())
 
                 # stop after main, no cleanup data
-                if stack.name() == "main" and stack.older() is None:
-                    break
+                #if stack.name() == "main" and stack.older() is None:
+                    #break
 
                 # filters out frames that map to non source files (assembly..)
                 if not sal.symtab:
@@ -71,7 +71,7 @@ class RunAll(gdb.Command):
 
                 if self.workspace_root and src_path.startswith(self.workspace_root):
                      pass #vs code
-                elif src_path.endswith(".c"):
+                elif sal.symtab and ".c" in sal.symtab.filename:
                      pass  # docker
                 else:
                      gdb.execute("step")
@@ -91,10 +91,12 @@ class RunAll(gdb.Command):
                             vars[symbol.name] = str(value)
                         except:
                             vars[symbol.name] = "undefined"
-                        # get the curr line number where the symbol is using program counter
-                        line = sal.line
-                        # add to trace data dictionary, {line num (int): updated vars dictionary}
-                        self.trace_data[line] = vars
+                # get the curr line number where the symbol is using program counter
+                line = sal.line
+                # add to trace data dictionary, {line num (int): updated vars dictionary}
+                if line not in self.trace_data:
+                    self.trace_data[line] = {}
+                self.trace_data[line].update(vars)
                 # next instruction
                 gdb.execute("step")
 
