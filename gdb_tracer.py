@@ -9,7 +9,7 @@ class RunAll(gdb.Command):
     def __init__(self):
         # call super constructor, register command name in gdb
         super(RunAll, self).__init__("runall", gdb.COMMAND_USER)
-        # empty dict to hold data at each line
+        # empty dict to hold data at each line, {line : vars dict}
         self.trace_data = {}
         # user workspace directory for vs code extension or empty 
         self.workspace_root = os.environ.get("VSCODE_WORKSPACE_ROOT", "").strip()
@@ -50,6 +50,7 @@ class RunAll(gdb.Command):
         gdb.execute("start")
         gdb.execute("step")
         # infinite loop to step through every line of code
+        vars = {}
         while True:
             # for each line
             try:
@@ -79,24 +80,25 @@ class RunAll(gdb.Command):
 
                 # get current scope
                 scope = stack.block()
-                # create dictionary {variable name : value}
-                vars = {}
+                # create dictionary {variable name : value list}
                 # loop through code and find variables
                 for symbol in scope:
                     if symbol.is_variable:
                         try:
                             # read value of variable in current frame, uses name of symbol to get value
                             value = stack.read_var(symbol.name)
+                            if symbol.name not in vars:
+                                vars[symbol.name] = [str(value)]
+                            else:
+                                vars[symbol.name].append(str(value))
                             # save symbol & string version of value to dictionary (string for json later)
-                            vars[symbol.name] = str(value)
+                            #vars[symbol.name] = str(value)
                         except:
-                            vars[symbol.name] = "undefined"
+                            vars[symbol.name] = ["undefined"]
                 # get the curr line number where the symbol is using program counter
                 line = sal.line
                 # add to trace data dictionary, {line num (int): updated vars dictionary}
-                if line not in self.trace_data:
-                    self.trace_data[line] = {}
-                self.trace_data[line].update(vars)
+                self.trace_data[line] = vars
                 # next instruction
                 gdb.execute("step")
 
