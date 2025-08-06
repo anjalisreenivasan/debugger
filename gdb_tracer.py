@@ -53,16 +53,11 @@ class RunAll(gdb.Command):
         gdb.execute("step")
         # infinite loop to step through every line of code
         while True:
-            # for each line
             try:
                 # get current stack frame
                 stack = gdb.selected_frame()
                 # get source line mapping
                 sal = gdb.find_pc_line(stack.pc())
-
-                # stop after main, no cleanup data
-                #if stack.name() == "main" and stack.older() is None:
-                    #break
 
                 # filters out frames that map to non source files (assembly..)
                 if not sal.symtab:
@@ -93,17 +88,13 @@ class RunAll(gdb.Command):
                                 snapshot_vars[symbol.name] = [str(value)]
                             else:
                                 snapshot_vars[symbol.name].append(str(value))
-                            # save symbol & string version of value to dictionary (string for json later)
-                            #vars[symbol.name] = str(value)
                         except:
                             snapshot_vars[symbol.name] = ["undefined"]
-                # get the curr line number where the symbol is using program counter
                 line = sal.line
                 self.vars = snapshot_vars
-                # add to trace data dictionary, {line num (int): updated vars dictionary}
-                #print("LINE:", sal.line, "VARS:", snapshot_vars)
                 self.trace_data.append({line: copy.deepcopy(self.vars)})
-                # next instruction
+                
+                # quit at the return statement in main
                 if stack.name() == "main":
                     try:
                         with open(src_path, "r") as file:
@@ -113,7 +104,8 @@ class RunAll(gdb.Command):
                             break
                     except FileNotFoundError:
                         pass
-                
+
+                # next instruction
                 gdb.execute("step")
 
             except (gdb.error, RuntimeError):
