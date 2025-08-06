@@ -10,8 +10,9 @@ class RunAll(gdb.Command):
     def __init__(self):
         # call super constructor, register command name in gdb
         super(RunAll, self).__init__("runall", gdb.COMMAND_USER)
-        # empty dict to hold data at each line, {line : vars dict}
+        # list to hold data at each line
         self.trace_data = []
+        # dict to store variables and values
         self.vars = {}
         # user workspace directory for vs code extension or empty 
         self.workspace_root = os.environ.get("VSCODE_WORKSPACE_ROOT", "").strip()
@@ -44,7 +45,7 @@ class RunAll(gdb.Command):
         # next available number for naming the file
         next_num = max(numbers, default=0) + 1
         # final file name
-        return f"{base}_{next_num}.json"
+        return f"{base}_{next_num}.jsonl"
 
     # run gdb on the program and save data
     def invoke(self, args, from_tty):
