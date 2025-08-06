@@ -35,7 +35,7 @@ class RunAll(gdb.Command):
         # store just the program name
         base = os.path.splitext(base_name)[0]
         # regex for matching
-        pattern = re.compile(rf"{re.escape(base)}_(\d+)\.json")
+        pattern = re.compile(rf"{re.escape(base)}_(\d+)\.jsonl")
 
         # list of existing files in current directory
         existing = [f for f in os.listdir(".") if pattern.fullmatch(f)]
