@@ -104,12 +104,21 @@ class RunAll(gdb.Command):
                 #print("LINE:", sal.line, "VARS:", snapshot_vars)
                 self.trace_data.append({line: copy.deepcopy(self.vars)})
                 # next instruction
+                if stack.name() == "main":
+                    try:
+                        with open(src_path, "r") as file:
+                            lines = file.readlines()
+                            curr_line = lines[sal.line - 1].strip()
+                        if curr_line.startswith("return"):
+                            break
+                    except FileNotFoundError:
+                        pass
+                
                 gdb.execute("step")
 
             except (gdb.error, RuntimeError):
                 break
                 # end of program
-
         base = self.get_program_name()
         output_file = self.get_next_filename(base)
 
