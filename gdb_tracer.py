@@ -3,6 +3,7 @@ import gdb # type: ignore
 import json
 import os
 import re
+import copy
 
 # custom gdb command
 class RunAll(gdb.Command):
@@ -10,7 +11,8 @@ class RunAll(gdb.Command):
         # call super constructor, register command name in gdb
         super(RunAll, self).__init__("runall", gdb.COMMAND_USER)
         # empty dict to hold data at each line, {line : vars dict}
-        self.trace_data = {}
+        self.trace_data = []
+        self.vars = {}
         # user workspace directory for vs code extension or empty 
         self.workspace_root = os.environ.get("VSCODE_WORKSPACE_ROOT", "").strip()
         if self.workspace_root:
@@ -50,7 +52,6 @@ class RunAll(gdb.Command):
         gdb.execute("start")
         gdb.execute("step")
         # infinite loop to step through every line of code
-        vars = {}
         while True:
             # for each line
             try:
@@ -80,36 +81,40 @@ class RunAll(gdb.Command):
 
                 # get current scope
                 scope = stack.block()
-                # create dictionary {variable name : value list}
+                # temporary vars dict for current state
+                snapshot_vars = {}
                 # loop through code and find variables
                 for symbol in scope:
                     if symbol.is_variable:
                         try:
                             # read value of variable in current frame, uses name of symbol to get value
                             value = stack.read_var(symbol.name)
-                            if symbol.name not in vars:
-                                vars[symbol.name] = [str(value)]
+                            if symbol.name not in snapshot_vars:
+                                snapshot_vars[symbol.name] = [str(value)]
                             else:
-                                vars[symbol.name].append(str(value))
+                                snapshot_vars[symbol.name].append(str(value))
                             # save symbol & string version of value to dictionary (string for json later)
                             #vars[symbol.name] = str(value)
                         except:
-                            vars[symbol.name] = ["undefined"]
+                            snapshot_vars[symbol.name] = ["undefined"]
                 # get the curr line number where the symbol is using program counter
                 line = sal.line
+                self.vars = snapshot_vars
                 # add to trace data dictionary, {line num (int): updated vars dictionary}
-                self.trace_data[line] = vars
+                #print("LINE:", sal.line, "VARS:", snapshot_vars)
+                self.trace_data.append({line: copy.deepcopy(self.vars)})
                 # next instruction
                 gdb.execute("step")
 
             except (gdb.error, RuntimeError):
                 break
                 # end of program
-        
+
         base = self.get_program_name()
         output_file = self.get_next_filename(base)
 
         # Save the JSON file
         with open(output_file, "w") as f:
-            json.dump(self.trace_data, f, indent=2)
+            for entry in self.trace_data:
+                f.write(json.dumps(entry) + "\n")
 RunAll()
