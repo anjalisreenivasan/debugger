@@ -51,7 +51,7 @@ class RunAll(gdb.Command):
     def invoke(self, args, from_tty):
         # start running gdb at the beggining of main
         gdb.execute("start")
-        gdb.execute("step")
+        #gdb.execute("step")
         # infinite loop to step through every line of code
         while True:
             try:
