@@ -51,7 +51,8 @@ class RunAll(gdb.Command):
     def invoke(self, args, from_tty):
         # start running gdb at the beggining of main
         gdb.execute("start")
-        last_line = 0
+        # current line variable
+        line = 0
         # infinite loop to step through every line of code
         while True:
             try:
@@ -104,7 +105,6 @@ class RunAll(gdb.Command):
                             lines = file.readlines()
                             curr_line = lines[sal.line - 1].strip()
                         if curr_line.startswith("return"):
-                            last_line = line
                             break
                     except FileNotFoundError:
                         pass
@@ -122,6 +122,5 @@ class RunAll(gdb.Command):
         with open(output_file, "w") as f:
             for entry in self.trace_data:
                 f.write(json.dumps(entry) + "\n")
-        with open(output_file, "a") as f:
-            f.write("program returned at line " + str(last_line))
+            f.write("program returned at line " + str(line))
 RunAll()
