@@ -13,8 +13,8 @@ source_file = sys.argv[1]
 # isolate file name
 executable = os.path.splitext(source_file)[0]
 
-# prepare command for compilation
-compile_command = ["gcc", "-g", source_file, "-o", executable]
+# prepare command for compilation, strict compilation
+compile_command = ["gcc", "-g", "-Wall", "-Wextra", "-Wpedantic", "-std=c99", source_file, "-o", executable]
 
 # compile the program
 try:

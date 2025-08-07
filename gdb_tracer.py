@@ -51,16 +51,17 @@ class RunAll(gdb.Command):
     def invoke(self, args, from_tty):
         # start running gdb at the beggining of main
         gdb.execute("start")
-        #gdb.execute("step")
         # infinite loop to step through every line of code
         while True:
             try:
                 # get current stack frame
                 stack = gdb.selected_frame()
-                # get source line mapping
-                sal = gdb.find_pc_line(stack.pc())
+
+                # get symbol table and line object corresponding to curr frame
+                sal = stack.find_sal()
 
                 # filters out frames that map to non source files (assembly..)
+                # ex. only frames in test_1.c
                 if not sal.symtab:
                     gdb.execute("step")
                     continue
@@ -69,7 +70,7 @@ class RunAll(gdb.Command):
 
                 if self.workspace_root and src_path.startswith(self.workspace_root):
                      pass #vs code
-                elif sal.symtab and ".c" in sal.symtab.filename:
+                elif sal.symtab or ".c" in sal.symtab.filename:
                      pass  # docker
                 else:
                      gdb.execute("step")
