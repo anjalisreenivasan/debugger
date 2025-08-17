@@ -1,4 +1,5 @@
 # custom command to run gdb on entire program and save data to json file
+import traceback
 import gdb # type: ignore
 import json
 import os
@@ -68,31 +69,6 @@ class RunAll(gdb.Command):
                     gdb.execute("step")
                     continue
 
-                # path
-                src_path = os.path.abspath(sal.symtab.filename)
-
-                # check
-                if self.workspace_root and src_path.startswith(self.workspace_root):
-                     pass #vs code
-                elif sal.symtab or ".c" in sal.symtab.filename:
-                     pass  # docker
-                else:
-                     gdb.execute("step")
-                     continue
-                
-                # skip the print statement with next
-                if stack.name() == "main":
-                    try:
-                        with open(src_path, "r") as f:
-                            lines = f.readlines()
-                            curr_line = lines[sal.line - 1].strip()
-                            if curr_line.startswith("printf"):
-                                gdb.execute("next")
-                                print("PRINTTTT????")
-                    except FileNotFoundError:
-                        pass
-            
-
                 # get current scope
                 scope = stack.block()
                 # temporary vars dict for current state
@@ -113,24 +89,19 @@ class RunAll(gdb.Command):
                 line = sal.line
                 self.vars = snapshot_vars
                 self.trace_data.append({line: copy.deepcopy(self.vars)})
-                
-                # quit at the return statement in main
-                if stack.name() == "main":
-                    try:
-                        with open(src_path, "r") as file:
-                            lines = file.readlines()
-                            curr_line = lines[sal.line - 1].strip()
-                        if curr_line.startswith("return"):
-                            break
-                    except FileNotFoundError:
-                        pass
 
                 # next instruction
                 gdb.execute("step")
+                stack = gdb.selected_frame()
+                sal = stack.find_sal()
+                if not self.workspace_root or not os.path.abspath(sal.symtab.objfile.filename).startswith(self.workspace_root):
+                     gdb.execute("finish")
 
             except (gdb.error, RuntimeError):
+                traceback.print_exc()
                 break
-                # end of program
+
+                
         base = self.get_program_name()
         output_file = self.get_next_filename(base)
 
