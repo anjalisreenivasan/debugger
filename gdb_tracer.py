@@ -68,8 +68,10 @@ class RunAll(gdb.Command):
                     gdb.execute("step")
                     continue
 
+                # path
                 src_path = os.path.abspath(sal.symtab.filename)
 
+                # check
                 if self.workspace_root and src_path.startswith(self.workspace_root):
                      pass #vs code
                 elif sal.symtab or ".c" in sal.symtab.filename:
@@ -77,6 +79,19 @@ class RunAll(gdb.Command):
                 else:
                      gdb.execute("step")
                      continue
+                
+                # skip the print statement with next
+                if stack.name() == "main":
+                    try:
+                        with open(src_path, "r") as f:
+                            lines = f.readlines()
+                            curr_line = lines[sal.line - 1].strip()
+                            if curr_line.startswith("printf"):
+                                gdb.execute("next")
+                                print("PRINTTTT????")
+                    except FileNotFoundError:
+                        pass
+            
 
                 # get current scope
                 scope = stack.block()
@@ -94,6 +109,7 @@ class RunAll(gdb.Command):
                                 snapshot_vars[symbol.name].append(str(value))
                         except:
                             snapshot_vars[symbol.name] = ["undefined"]
+
                 line = sal.line
                 self.vars = snapshot_vars
                 self.trace_data.append({line: copy.deepcopy(self.vars)})
