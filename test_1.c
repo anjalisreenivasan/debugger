@@ -1,3 +1,4 @@
+/* basic variables and values */
 #include <stdio.h>
 #include <stdlib.h>
 

@@ -1,4 +1,0 @@
-{"5": {"a": ["16"], "b": ["0"]}}
-{"6": {"a": ["10"], "b": ["0"]}}
-{"28": {"arg": ["{__stack = 0xfffff2bf0ec8, __gr_top = 0xaaaabec20d98, __vr_top = 0x0, __gr_offs = 0, __vr_offs = 0}"], "done": ["<optimized out>"]}}
-program returned at line 28

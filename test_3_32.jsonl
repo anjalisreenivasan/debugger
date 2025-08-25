@@ -1,8 +1,0 @@
-{"5": {"a": ["16"], "b": ["0"]}}
-{"6": {"a": ["10"], "b": ["0"]}}
-{"28": {"arg": ["{__stack = 0xffffe9367058, __gr_top = 0xaaaadf030d98, __vr_top = 0x0, __gr_offs = 0, __vr_offs = 0}"], "done": ["<optimized out>"]}}
-{"7": {"a": ["10"], "b": ["0"]}}
-{"8": {"a": ["10"], "b": ["15"]}}
-{"9": {"a": ["10"], "b": ["15"]}}
-{"74": {"result": ["0"], "unwind_buf": ["{cancel_jmp_buf = {{jmp_buf = {281474594402376, 1, 187650862681496, 281473486676032, 187650862614356, 281473486331904, 0, 281474594402392, 187650862681496, 0, 281474594402000, 1893219570601102321, 5712816347964273509, 1893219571840194273, 0, 0, 0, 0, 0, 0, 0, 0}, mask_was_saved = 0}}, priv = {pad = {0x0, 0x0, 0xffffa72aa000 <sys_siglist+424>, 0xffffa72ab080 <_dl_audit_preinit@got.plt>}, data = {prev = 0x0, cleanup = 0x0, canceltype = -1490378752}}}"], "not_first_call": ["<optimized out>"]}}
-program returned at line 74
