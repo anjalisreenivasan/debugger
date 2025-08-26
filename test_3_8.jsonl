@@ -1,0 +1,7 @@
+{"5": {"a": ["\"8\\270\", <incomplete sequence \\365>"], "b": ["65535"]}}
+{"7": {"a": ["\"8\\270\", <incomplete sequence \\365>"], "b": ["65535"]}} // gdb gives you this error, very helpful
+{"8": {"a": ["\"lon\""], "b": ["65535"]}}
+{"9": {"a": ["\"lon\""], "b": ["65535"]}}
+{"10": {"a": ["\"lon\""], "b": ["15"]}}
+{"11": {"a": ["\"lon\""], "b": ["15"]}}
+program returned at line 11
